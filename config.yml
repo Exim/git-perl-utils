@@ -1,0 +1,11 @@
+---
+# YAML config
+#
+git_dir:      /Users/nigel/Tasks/exim/exim/.git
+exludehead:   
+lasttag:      .bug_last_commit
+gitweb:       http://git.exim.org/exim.git
+bugzilla:
+  server:     http://bugs.exim.org/
+  user:       git
+  pass:       pass
