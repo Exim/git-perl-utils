@@ -43,8 +43,8 @@ sub update_bugzilla {
         $bz->additional_comments( join( "\n", $header, @{ $info->{all} } ) );
     }
 
-    $bz->change_status("fixed")  if ( $set->{action} eq 'fixes' );
-    $bz->change_status("closed") if ( $set->{action} eq 'closes' );
+    $bz->change_status("fixed")  if ( $set->{action} =~ /fixes/ );
+    $bz->change_status("closed") if ( $set->{action} =~ /closes/ );
 
     $bz->commit;
 
@@ -74,7 +74,6 @@ sub find_bugzilla_references {
         }
 
         # remap actions
-        $action = 'closes' if ( $action =~ /^fix/ );
 
         push( @results, { bug => $bugid, action => $action } );
         ##printf( "%s\n\taction = %s bugid = %s\n", $info->{rev}, $action, $bugid );
