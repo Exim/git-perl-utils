@@ -477,7 +477,7 @@ sub change_status {
         $self->{resolution} = '';
         # $status{$status};
     } else {
-        $self->{status} = "RESOLVED";
+        $self->{status} = "resolve";
         $self->{resolution} = $status;
     }
 
