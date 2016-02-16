@@ -61,11 +61,11 @@ sub find_bugzilla_references {
     my $bugid;
     foreach my $line ( @{ $info->{log} } ) {
         $line = lc($line);
-        if ( $line =~ /(closes|fixes|references):?\s*(?:bug(?:zilla)?)?\s*\#?(\d+)/ ) {
+        if ( $line =~ /(closes|fixes|references):?\s*(?:bug(?:zilla|s)?)?\s*\#?(\d+)/ ) {
             $action = $1;
             $bugid  = $2;
         }
-        elsif ( $line =~ /\b(?:bug(?:zilla)?)\s*\#?(\d+)/ ) {
+        elsif ( $line =~ /\b(?:bug(?:zilla|s)?)\s*\#?(\d+)/ ) {
             $action = 'references';
             $bugid  = $1;
         }
