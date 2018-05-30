@@ -27,15 +27,20 @@ sub update_bugzilla {
         server     => $cfg->{bugzilla}{server},
         email      => $cfg->{bugzilla}{user},
         password   => $cfg->{bugzilla}{pass},
+        use_ssl=>1,
         bug_number => $set->{bug}
     ) || croak "Cannot open bz - $!";
 
-    my $header = sprintf( "Git commit: %s/commitdiff/%s\n", $cfg->{gitweb}, $info->{rev} );
+    my $header =
+      sprintf( "Git commit: %s/commitdiff/%s\n", $cfg->{gitweb}, $info->{rev} );
     if ( scalar( @{ $info->{diff} } ) > 50 ) {
 
         # big diff - we skip the diff
         $bz->additional_comments(
-            join( "\n", $header, @{ $info->{info} }, '', @{ $info->{log} }, '----', @{ $info->{diffstat} } ) );
+            join( "\n",
+                $header,           @{ $info->{info} }, '',
+                @{ $info->{log} }, '----',             @{ $info->{diffstat} } )
+        );
     }
     else {
 
@@ -48,7 +53,9 @@ sub update_bugzilla {
 
     $bz->commit;
 
-    printf( "[%d] %s %s [%s]\n", $set->{bug}, $info->{rev}, $info->{log}[0], $set->{action} );
+    printf( "[%d] %s %s [%s]\n",
+        $set->{bug}, $info->{rev}, $info->{log}[0], $set->{action} )
+      if ($verbose);
 }
 
 # ------------------------------------------------------------------------
@@ -61,7 +68,9 @@ sub find_bugzilla_references {
     my $bugid;
     foreach my $line ( @{ $info->{log} } ) {
         $line = lc($line);
-        if ( $line =~ /(closes|fixes|references):?\s*(?:bug(?:zilla|s)?)?\s*\#?(\d+)/ ) {
+        if ( $line =~
+            /(closes|fixes|references):?\s*(?:bug(?:zilla|s)?)?\s*\#?(\d+)/ )
+        {
             $action = $1;
             $bugid  = $2;
         }
@@ -76,7 +85,8 @@ sub find_bugzilla_references {
         # remap actions
 
         push( @results, { bug => $bugid, action => $action } );
-        ##printf( "%s\n\taction = %s bugid = %s\n", $info->{rev}, $action, $bugid );
+        printf( "%s\n\taction = %s bugid = %s\n",
+            $info->{rev}, $action, $bugid );
     }
     return @results;
 }
@@ -87,7 +97,9 @@ sub git_commit_info {
     my $git = shift;
     my $rev = shift;
 
-    my @lines = $git->run( 'show', '-M', '-C', '--patch-with-stat', '--pretty=fuller', $rev );
+    my @lines =
+      $git->run( 'show', '-M', '-C', '--patch-with-stat', '--pretty=fuller',
+        $rev );
 
     my $info = {
         rev      => $rev,
@@ -130,7 +142,8 @@ sub walk_git_commits {
 
     return if ( $lastrev eq $headrev );
 
-    my @revs = $git->run( 'rev-list', '--topo-order', '--no-merges', ( $lastrev . '..' . $headrev ) );
+    my @revs = $git->run( 'rev-list', '--topo-order', '--no-merges',
+        ( $lastrev . '..' . $headrev ) );
 
     foreach my $rev ( reverse(@revs) ) {
         my $info = git_commit_info( $git, $rev );
@@ -157,16 +170,24 @@ sub walk_git_commits {
         'verbose!' => \$verbose,
     ) or die "Incorrect options";
     die "No config file given\n" unless ( $config and -f $config );
-    my $cfg = ( values( %{ Config::Any->load_files( { files => [$config], use_ext => 1 } )->[0] } ) )[0];
+    my $cfg = (
+        values(
+            %{ Config::Any->load_files( { files => [$config], use_ext => 1 } )
+                  ->[0]
+            }
+        )
+    )[0];
 
     die "No git_dir specified\n" unless ( $cfg->{git_dir} );
     $cfg->{lasttag} ||= $cfg->{git_dir} . '/refs/tags/BugzillaDone';
     $cfg->{branch_head} ||= 'HEAD';
 
-    $cfg->{lastref} = -f $cfg->{lasttag} ? read_file( $cfg->{lasttag} ) : 'HEAD';
+    $cfg->{lastref} =
+      -f $cfg->{lasttag} ? read_file( $cfg->{lasttag} ) : 'HEAD';
     chomp( $cfg->{lastref} );
 
-    my $git = Git::Repository->new( git_dir => $cfg->{git_dir} ) || die "No valid git repo\n";
+    my $git = Git::Repository->new( git_dir => $cfg->{git_dir} )
+      || die "No valid git repo\n";
 
     my $newlast = walk_git_commits( $git, $cfg );
     if ($newlast) {
