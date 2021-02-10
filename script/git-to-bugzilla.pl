@@ -10,6 +10,7 @@ use File::Slurp;
 use FindBin;
 use Getopt::Long;
 use Git::Repository;
+use Try::Tiny;
 
 use lib "$FindBin::Bin/../lib";
 use WWW::Bugzilla;
@@ -23,13 +24,24 @@ sub update_bugzilla {
     my $info = shift;
     my $set  = shift;
 
-    my $bz = WWW::Bugzilla->new(
-        server     => $cfg->{bugzilla}{server},
-        email      => $cfg->{bugzilla}{user},
-        password   => $cfg->{bugzilla}{pass},
-        use_ssl=>1,
-        bug_number => $set->{bug}
-    ) || croak "Cannot open bz - $!";
+    my $bz;
+    my $fail;
+    try {
+        $bz = WWW::Bugzilla->new(
+            server     => $cfg->{bugzilla}{server},
+            email      => $cfg->{bugzilla}{user},
+            password   => $cfg->{bugzilla}{pass},
+            use_ssl    => 1,
+            bug_number => $set->{bug}
+        );
+    } catch {
+        if (/Bug #\d+ does not exist/) {
+            warn sprintf("Bug #%s does not exist\n", $set->{bug});
+        }
+        $fail = 1;
+    };
+    return if ($fail);
+    croak "Cannot open bz - $!" unless($bz);
 
     my $header =
       sprintf( "Git commit: %s/commitdiff/%s\n", $cfg->{gitweb}, $info->{rev} );
